@@ -42,6 +42,13 @@ Kleen is a fast, intuitive iOS app that helps you clean up your photo gallery us
 - **Smooth Animations**: Spring animations and transitions throughout
 
 ## 📱 Screenshots
+                                                    
+<p align="center">
+ <img src="Screenshots/Onboarding.png" width="200" alt="Onboarding">
+ <img src="Screenshots/Home.png" width="200" alt="Main Feed">
+ <img src="Screenshots/Keep.png" width="200" alt="Swipe right">
+ <img src="Screenshots/Delete.png" width="200" alt="Swipe left">
+</p>
 
 ### Main Interface
 - **Splash Screen**: Minimalist "Kleen" branding on app launch
