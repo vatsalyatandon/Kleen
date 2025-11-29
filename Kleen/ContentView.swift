@@ -5,11 +5,19 @@ struct ContentView: View {
     
     var body: some View {
         VStack {
+            Text("Gallery Cleaner")
+                .font(.headline)
+                .padding()
+            
             if photoManager.permissionGranted {
                 if photoManager.photos.isEmpty {
-                    Text("No photos to clean!")
-                        .font(.title)
-                        .foregroundColor(.gray)
+                    VStack {
+                        Text("No photos found.")
+                            .font(.title)
+                            .foregroundColor(.gray)
+                        Text("Check if your simulator/device has photos.")
+                            .font(.caption)
+                    }
                 } else {
                     ZStack {
                         ForEach(Array(photoManager.photos.prefix(3).reversed()), id: \.localIdentifier) { asset in
@@ -28,9 +36,17 @@ struct ContentView: View {
                     }
                 }
             } else {
-                Text("Please grant photo library access in Settings.")
-                    .padding()
+                VStack {
+                    Text("Permission not granted.")
+                        .padding()
+                    Button("Request Permission") {
+                        photoManager.requestPermission()
+                    }
+                }
             }
+        }
+        .onAppear {
+            print("ContentView appeared")
         }
     }
 }
