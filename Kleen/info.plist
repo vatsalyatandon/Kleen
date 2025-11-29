@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>New item</key>
+	<dict>
+		<key>NSPhotoLibraryUsageDescription</key>
+		<string>We need access to your photo library to help you clean up your gallery.</string>
+		<key>CFBundleIdentifier</key>
+		<string>com.A2Labs.Kleen</string>
+		<key>CFBundleName</key>
+		<string>Kleen</string>
+		<key>CFBundleVersion</key>
+		<string>1.0</string>
+		<key>CFBundleShortVersionString</key>
+		<string>1.0</string>
+	</dict>
+</dict>
+</plist>
