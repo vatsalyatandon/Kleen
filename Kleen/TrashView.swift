@@ -1,11 +1,3 @@
-//
-//  TrashView.swift
-//  Kleen
-//
-//  Created by Vatsalya Tandon on 29/11/25.
-//
-
-
 import SwiftUI
 import Photos
 
@@ -13,6 +5,7 @@ struct TrashView: View {
     let photosToDelete: [PHAsset]
     let onDismiss: () -> Void
     let onCommit: () -> Void
+    let onRestore: (PHAsset) -> Void
     
     var body: some View {
         ZStack {
@@ -53,10 +46,19 @@ struct TrashView: View {
                     }
                     Spacer()
                 } else {
+                    Text("Tap a photo to restore it")
+                        .font(.caption)
+                        .foregroundColor(.gray)
+                    
                     ScrollView {
                         LazyVGrid(columns: [GridItem(.adaptive(minimum: 100))], spacing: 10) {
                             ForEach(photosToDelete, id: \.localIdentifier) { asset in
                                 TrashPhotoCell(asset: asset)
+                                    .onTapGesture {
+                                        withAnimation {
+                                            onRestore(asset)
+                                        }
+                                    }
                             }
                         }
                         .padding()

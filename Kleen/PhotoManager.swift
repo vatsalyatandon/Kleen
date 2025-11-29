@@ -11,10 +11,9 @@ class PhotoManager: NSObject, ObservableObject, PHPhotoLibraryChangeObserver {
     @Published var isLoading: Bool = false
     @Published var errorMessage: String? = nil
     
-    private var fetchResult: PHFetchResult<PHAsset>?
-    private var lastLoadedIndex = 0
-    private let batchSize = 50
+    private var allAssets: PHFetchResult<PHAsset>?
     private let trashKey = "gallery_cleaner_trash_ids"
+    private let keptKey = "photosKept"
     
     override init() {
         super.init()
@@ -79,6 +78,10 @@ class PhotoManager: NSObject, ObservableObject, PHPhotoLibraryChangeObserver {
         if self.permissionGranted {
             // Register observer now that we have permission
             PHPhotoLibrary.shared().register(self)
+            
+            // Reset isLoading because requestPermission set it to true,
+            // and fetchPhotos has a guard check for it.
+            self.isLoading = false
             self.fetchPhotos()
         } else {
             self.isLoading = false
@@ -86,43 +89,102 @@ class PhotoManager: NSObject, ObservableObject, PHPhotoLibraryChangeObserver {
     }
     
     func fetchPhotos() {
+        guard !isLoading else { return }
+        
         DispatchQueue.main.async {
             self.isLoading = true
         }
-        errorMessage = nil
-        lastLoadedIndex = 0
-        photos.removeAll()
         
         let fetchOptions = PHFetchOptions()
         fetchOptions.sortDescriptors = [NSSortDescriptor(key: "creationDate", ascending: false)]
-        fetchOptions.includeAllBurstAssets = false // Handle Bursts
+        fetchOptions.includeAllBurstAssets = false
         
-        self.fetchResult = PHAsset.fetchAssets(with: .image, options: fetchOptions)
+        let allAssets = PHAsset.fetchAssets(with: .image, options: fetchOptions)
+        self.allAssets = allAssets
         
-        loadMorePhotos()
+        // Load kept IDs
+        let keptIds = Set(UserDefaults.standard.stringArray(forKey: keptKey) ?? [])
+        // Load trash IDs (already in photosToDelete, but good to have the set for filtering)
+        let trashIds = Set(photosToDelete.map { $0.localIdentifier })
+        
+        var newPhotos: [PHAsset] = []
+        var count = 0
+        let batchSize = 50
+        
+        // Iterate and filter
+        allAssets.enumerateObjects { asset, index, stop in
+            // Skip if already kept or already in trash
+            if !keptIds.contains(asset.localIdentifier) && !trashIds.contains(asset.localIdentifier) {
+                newPhotos.append(asset)
+                count += 1
+            }
+            
+            if count >= batchSize {
+                stop.pointee = true
+            }
+        }
+        
+        DispatchQueue.main.async {
+            self.photos = newPhotos
+            self.isLoading = false
+        }
     }
     
     func loadMorePhotos() {
-        guard let fetchResult = fetchResult, lastLoadedIndex < fetchResult.count else {
-            isLoading = false
-            return
-        }
+        guard let lastPhoto = photos.last, let allAssets = allAssets else { return }
         
-        let endIndex = min(lastLoadedIndex + batchSize, fetchResult.count)
+        let keptIds = Set(UserDefaults.standard.stringArray(forKey: keptKey) ?? [])
+        let trashIds = Set(photosToDelete.map { $0.localIdentifier })
+        
         var newPhotos: [PHAsset] = []
+        var count = 0
+        let batchSize = 50
+        var shouldStartAdding = false
         
-        // Fetch batch
-        fetchResult.enumerateObjects(at: IndexSet(integersIn: lastLoadedIndex..<endIndex)) { asset, _, _ in
-            // Filter out photos already in trash
-            if !self.photosToDelete.contains(where: { $0.localIdentifier == asset.localIdentifier }) {
-                newPhotos.append(asset)
+        allAssets.enumerateObjects { asset, index, stop in
+            if asset.localIdentifier == lastPhoto.localIdentifier {
+                shouldStartAdding = true
+                return // Continue to next iteration
+            }
+            
+            if shouldStartAdding {
+                // Filter out kept/trash
+                if !keptIds.contains(asset.localIdentifier) && !trashIds.contains(asset.localIdentifier) {
+                    newPhotos.append(asset)
+                    count += 1
+                }
+                
+                if count >= batchSize {
+                    stop.pointee = true
+                }
             }
         }
         
         DispatchQueue.main.async {
             self.photos.append(contentsOf: newPhotos)
-            self.lastLoadedIndex = endIndex
-            self.isLoading = false
+        }
+    }
+    
+    func keepPhoto(asset: PHAsset) {
+        // Add to kept list and persist
+        var keptIds = UserDefaults.standard.stringArray(forKey: keptKey) ?? []
+        keptIds.append(asset.localIdentifier)
+        UserDefaults.standard.set(keptIds, forKey: keptKey)
+    }
+    
+    func restorePhoto(asset: PHAsset) {
+        // Remove from trash queue
+        if let index = photosToDelete.firstIndex(where: { $0.localIdentifier == asset.localIdentifier }) {
+            photosToDelete.remove(at: index)
+            saveTrash()
+            
+            // Add back to main photos deck if it's not already there
+            if !photos.contains(where: { $0.localIdentifier == asset.localIdentifier }) {
+                // We insert it at the beginning or end?
+                // Ideally, we just want it available again.
+                // Inserting at 0 makes it the "next" card, which is a good "Undo" behavior.
+                photos.insert(asset, at: 0)
+            }
         }
     }
     
@@ -209,8 +271,8 @@ class PhotoManager: NSObject, ObservableObject, PHPhotoLibraryChangeObserver {
         // Handle external changes
         DispatchQueue.main.async {
             // 1. Check if photos in our deck were deleted externally
-            if let fetchResult = self.fetchResult, let changes = changeInstance.changeDetails(for: fetchResult) {
-                self.fetchResult = changes.fetchResultAfterChanges
+            if let allAssets = self.allAssets, let changes = changeInstance.changeDetails(for: allAssets) {
+                self.allAssets = changes.fetchResultAfterChanges
                 // If objects were removed, we might need to remove them from our 'photos' array
                 if changes.hasIncrementalChanges {
                     let removed = changes.removedObjects

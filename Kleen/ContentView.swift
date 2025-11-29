@@ -28,18 +28,38 @@ struct ContentView: View {
             Color.black.edgesIgnoringSafeArea(.all)
             
             if !photoManager.permissionGranted {
-                VStack {
-                    Text("Permission Required")
+                VStack(spacing: 20) {
+                    Image(systemName: "photo.on.rectangle.angled")
+                        .resizable()
+                        .frame(width: 80, height: 80)
+                        .foregroundColor(.gray)
+                    
+                    Text("Photo Access Required")
                         .font(.title)
+                        .fontWeight(.bold)
                         .foregroundColor(.white)
-                        .padding()
-                    Button("Grant Access") {
-                        photoManager.requestPermission()
+                    
+                    Text("Kleen needs access to your photos to help you clean up your gallery.")
+                        .font(.body)
+                        .foregroundColor(.gray)
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal, 40)
+                    
+                    Button(action: {
+                        // Open Settings app
+                        if let settingsUrl = URL(string: UIApplication.openSettingsURLString) {
+                            UIApplication.shared.open(settingsUrl)
+                        }
+                    }) {
+                        Text("Open Settings")
+                            .font(.headline)
+                            .foregroundColor(.white)
+                            .frame(maxWidth: .infinity)
+                            .padding()
+                            .background(Color.blue)
+                            .cornerRadius(15)
                     }
-                    .padding()
-                    .background(Color.blue)
-                    .foregroundColor(.white)
-                    .cornerRadius(10)
+                    .padding(.horizontal, 40)
                 }
             } else if photoManager.isLoading {
                 LoadingView()
@@ -110,7 +130,11 @@ struct ContentView: View {
                         .zIndex(10) // Ensure HStack is above cards
                         
                         ZStack {
-                            ForEach(Array(photoManager.photos.prefix(3).reversed()), id: \.localIdentifier) { asset in
+                            // Show max 2 cards for stability and cleaner look
+                            let topPhotos = Array(photoManager.photos.prefix(2))
+                            
+                            // We reverse so the first item (top card) is rendered LAST (on top of ZStack)
+                            ForEach(Array(topPhotos.enumerated()).reversed(), id: \.element.localIdentifier) { index, asset in
                                 CardView(asset: asset) { kept in
                                     if !kept {
                                         photoManager.deletePhoto(asset: asset)
@@ -118,10 +142,18 @@ struct ContentView: View {
                                         if let index = photoManager.photos.firstIndex(of: asset) {
                                             photoManager.photos.remove(at: index)
                                         }
+                                        // Mark as kept
+                                        photoManager.keepPhoto(asset: asset)
                                     }
                                 }
+                                // Stack Effect Logic
+                                .zIndex(Double(topPhotos.count - index)) // Ensure correct layering
+                                .scaleEffect(index == 0 ? 1.0 : 0.96) // Subtle scale for back card
+                                .offset(y: index == 0 ? 0 : 0) // No vertical offset, just hide behind
+                                .opacity(1.0) // Always visible (static back card)
                                 .padding()
-                                .transition(.scale)
+                                .transition(.identity) // No transition for the stack itself
+                                .allowsHitTesting(index == 0) // Only top card is interactive
                             }
                         }
                         .animation(.spring(), value: photoManager.photos)
@@ -143,6 +175,9 @@ struct ContentView: View {
                                 withAnimation {
                                     showTrashView = false
                                 }
+                            },
+                            onRestore: { asset in
+                                photoManager.restorePhoto(asset: asset)
                             }
                         )
                         .zIndex(1)
@@ -154,3 +189,4 @@ struct ContentView: View {
         }
     }
 }
+    
