@@ -14,10 +14,16 @@ Kleen is a fast, intuitive iOS app that helps you clean up your photo gallery us
 - **Tinder-Style Swipe Interface**: Swipe left to delete photos, swipe right to keep them
 - **Batch Deletion**: Queue photos for deletion and delete them all at once with a single confirmation
 - **Smart Trash Management**: Review queued deletions anytime before committing
+- **Restore from Trash**: Tap any photo in trash to restore it back to your review queue
 - **Real-time Counter**: See how many photos you've marked for deletion
+- **Progress Tracking**: Live progress bar showing how many photos you've reviewed and how many remain
+- **Infinite Scroll**: Automatically loads more photos as you swipe - never see an "All Clean" screen until you're truly done
 
 ### Advanced Features
-- **Persistence**: Your deletion queue is saved automatically - close the app and come back anytime
+- **Smart Persistence**:
+  - Your deletion queue is saved automatically
+  - Photos you've kept are remembered - you'll never see them again
+  - Close the app and come back anytime without losing progress
 - **External Sync**: Automatically detects if you delete photos in the Apple Photos app
 - **Pagination**: Loads photos in batches of 50 for instant startup, even with 50,000+ photos
 - **Burst Photo Handling**: Automatically shows only one photo per burst sequence
@@ -25,17 +31,25 @@ Kleen is a fast, intuitive iOS app that helps you clean up your photo gallery us
 - **Performance Optimized**: Smooth animations and instant response
 
 ### User Experience
+- **Branded Splash Screen**: Beautiful "Kleen" splash screen on every app launch
 - **Onboarding Tutorial**: First-time users get a quick 3-page guide
-- **Beautiful Loading Screen**: Animated logo with gradient effects
+- **Modern UI Design**:
+  - Clean header with "Kleen" branding
+  - Premium card design with subtle borders and shadows
+  - Gradient progress bar with smooth animations
+- **Photo Details**: Tap the info icon to see full metadata (date, resolution, location, file size)
 - **Dark Mode UI**: Sleek, modern interface designed for OLED screens
 - **Smooth Animations**: Spring animations and transitions throughout
 
 ## 📱 Screenshots
 
 ### Main Interface
-- **Swipe View**: Tinder-style card interface with visual feedback
-- **Trash Button**: Red badge showing deletion count in top-right
-- **Trash View**: Grid view of all queued photos before deletion
+- **Splash Screen**: Minimalist "Kleen" branding on app launch
+- **Swipe View**: Tinder-style card interface with visual feedback and metadata overlay
+- **Progress Bar**: Bottom bar showing review progress with percentage and counts
+- **Trash Button**: Capsule badge showing deletion count in top-right
+- **Trash View**: Grid view of all queued photos with tap-to-restore functionality
+- **Photo Details**: Full metadata sheet with location map, file size, and technical info
 
 ## 🚀 Getting Started
 
@@ -67,10 +81,12 @@ Kleen is a fast, intuitive iOS app that helps you clean up your photo gallery us
    - `ContentView.swift` (Main view)
    - `PhotoManager.swift` (Core logic)
    - `CardView.swift` (Swipeable card)
-   - `LoadingView.swift` (Loading screen)
+   - `LoadingView.swift` (Splash screen)
    - `FinishedView.swift` (Completion screen)
    - `OnboardingView.swift` (Tutorial)
    - `TrashView.swift` (Trash management)
+   - `PhotoDetailView.swift` (Photo metadata details)
+   - `ProgressBar.swift` (Progress tracking UI)
    - `Info.plist` (Permissions)
 
 5. **Build and Run**
@@ -81,22 +97,31 @@ Kleen is a fast, intuitive iOS app that helps you clean up your photo gallery us
 ## 📖 How to Use
 
 ### First Launch
-1. **Onboarding**: You'll see a 3-page tutorial explaining how to use the app
-2. **Permission**: Grant photo library access (full or limited)
-3. **Loading**: The app loads your photos in batches
+1. **Splash Screen**: See the branded "Kleen" splash screen (2 seconds)
+2. **Onboarding**: You'll see a 3-page tutorial explaining how to use the app
+3. **Permission**: Grant photo library access (full or limited)
+4. **Loading**: The app loads your photos in batches
 
 ### Cleaning Your Gallery
-1. **Swipe Right**: Keep the photo (it disappears from the deck)
+1. **Swipe Right**: Keep the photo (it disappears from the deck and won't show again)
 2. **Swipe Left**: Mark for deletion (added to trash queue)
 3. **Visual Feedback**:
    - Green "KEEP" overlay when swiping right
    - Red "DELETE" overlay when swiping left
+4. **Photo Info**: Tap the info icon (bottom-right) to view detailed metadata
+5. **Progress Tracking**: Watch the progress bar at the bottom to see your completion percentage
 
 ### Managing Deletions
-1. **Trash Button**: Tap the red badge in top-right to view queued deletions
+1. **Trash Button**: Tap the capsule badge in top-right to view queued deletions
 2. **Review**: See thumbnails of all photos marked for deletion
-3. **Delete**: Tap "Delete X Photos" to permanently delete them
-4. **One Confirmation**: iOS shows a single system prompt for all deletions
+3. **Restore**: Tap any photo to restore it back to your review queue
+4. **Delete**: Tap "Delete X Photos" to permanently delete them
+5. **One Confirmation**: iOS shows a single system prompt for all deletions
+
+### Infinite Scrolling
+- The app automatically loads more photos as you swipe
+- No need to manually "load more" - it happens seamlessly
+- You'll only see "All Clean" when you've truly reviewed everything
 
 ### Mid-Session Deletion
 - You don't need to swipe through all photos
