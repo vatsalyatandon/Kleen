@@ -11,23 +11,18 @@ class PhotoManager: ObservableObject {
     }
     
     func requestPermission() {
-        print("Requesting permission...")
         if #available(iOS 14, *) {
             PHPhotoLibrary.requestAuthorization(for: .readWrite) { status in
-                print("Permission status: \(status.rawValue)")
                 DispatchQueue.main.async {
                     self.permissionGranted = (status == .authorized || status == .limited)
                     if self.permissionGranted {
                         self.fetchPhotos()
-                    } else {
-                        print("Permission denied or restricted.")
                     }
                 }
             }
         } else {
             // Fallback for older iOS versions
             PHPhotoLibrary.requestAuthorization { status in
-                print("Permission status (old API): \(status.rawValue)")
                 DispatchQueue.main.async {
                     self.permissionGranted = (status == .authorized)
                     if self.permissionGranted {
@@ -39,12 +34,9 @@ class PhotoManager: ObservableObject {
     }
     
     func fetchPhotos() {
-        print("Fetching photos...")
         let fetchOptions = PHFetchOptions()
         fetchOptions.sortDescriptors = [NSSortDescriptor(key: "creationDate", ascending: false)]
         let fetchResult = PHAsset.fetchAssets(with: .image, options: fetchOptions)
-        
-        print("Found \(fetchResult.count) photos.")
         
         var fetchedPhotos: [PHAsset] = []
         fetchResult.enumerateObjects { asset, _, _ in
@@ -53,7 +45,6 @@ class PhotoManager: ObservableObject {
         
         DispatchQueue.main.async {
             self.photos = fetchedPhotos
-            print("Photos updated in view model. Count: \(self.photos.count)")
         }
     }
     
