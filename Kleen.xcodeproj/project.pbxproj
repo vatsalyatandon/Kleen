@@ -6,6 +6,10 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		408233B12EDAE0CE003766E6 /* README.md in Resources */ = {isa = PBXBuildFile; fileRef = 408233B02EDAE0C9003766E6 /* README.md */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXContainerItemProxy section */
 		4047BACC2EDAAE75008ADC6A /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -27,6 +31,7 @@
 		4047BABE2EDAAE74008ADC6A /* Kleen.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Kleen.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		4047BACB2EDAAE75008ADC6A /* KleenTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = KleenTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		4047BAD52EDAAE75008ADC6A /* KleenUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = KleenUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		408233B02EDAE0C9003766E6 /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -75,6 +80,7 @@
 		4047BAB52EDAAE74008ADC6A = {
 			isa = PBXGroup;
 			children = (
+				408233B02EDAE0C9003766E6 /* README.md */,
 				4047BAC02EDAAE74008ADC6A /* Kleen */,
 				4047BACE2EDAAE75008ADC6A /* KleenTests */,
 				4047BAD82EDAAE75008ADC6A /* KleenUITests */,
@@ -212,6 +218,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				408233B12EDAE0CE003766E6 /* README.md in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
