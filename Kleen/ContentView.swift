@@ -15,6 +15,12 @@ struct ContentView: View {
                 mainContent
             }
         }
+        .onChange(of: showOnboarding) { newValue in
+            // When onboarding completes, request permission if needed
+            if !newValue && !photoManager.permissionGranted {
+                photoManager.requestPermission()
+            }
+        }
     }
     
     var mainContent: some View {

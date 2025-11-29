@@ -19,18 +19,34 @@ class PhotoManager: NSObject, ObservableObject, PHPhotoLibraryChangeObserver {
     override init() {
         super.init()
         
-        // Check current status synchronously to avoid UI flash
-        let currentStatus = PHPhotoLibrary.authorizationStatus()
-        self.permissionGranted = (currentStatus == .authorized || currentStatus == .limited)
-        self.isLimited = (currentStatus == .limited)
+        // IMPORTANT: Don't check authorization status on first launch
+        // because it triggers the permission prompt on iOS 14+
+        let hasSeenOnboarding = UserDefaults.standard.bool(forKey: "hasSeenOnboarding")
         
-        PHPhotoLibrary.shared().register(self)
+        if hasSeenOnboarding {
+            // Only check status if user has already seen onboarding
+            let currentStatus: PHAuthorizationStatus
+            if #available(iOS 14, *) {
+                currentStatus = PHPhotoLibrary.authorizationStatus(for: .readWrite)
+            } else {
+                currentStatus = PHPhotoLibrary.authorizationStatus()
+            }
+            
+            self.permissionGranted = (currentStatus == .authorized || currentStatus == .limited)
+            self.isLimited = (currentStatus == .limited)
+            
+            // Register observer only after onboarding
+            PHPhotoLibrary.shared().register(self)
+        } else {
+            // First launch - don't check status, let onboarding complete first
+            self.permissionGranted = false
+            self.isLimited = false
+        }
+        
         loadTrash()
         
-        // Only request if not already authorized
-        if !permissionGranted {
-            requestPermission()
-        } else {
+        // Only fetch photos if already authorized
+        if permissionGranted {
             fetchPhotos()
         }
     }
@@ -61,6 +77,8 @@ class PhotoManager: NSObject, ObservableObject, PHPhotoLibraryChangeObserver {
         self.isLimited = (status == .limited)
         
         if self.permissionGranted {
+            // Register observer now that we have permission
+            PHPhotoLibrary.shared().register(self)
             self.fetchPhotos()
         } else {
             self.isLoading = false
@@ -164,7 +182,11 @@ class PhotoManager: NSObject, ObservableObject, PHPhotoLibraryChangeObserver {
     }
     
     private func loadTrash() {
-        if let ids = UserDefaults.standard.array(forKey: trashKey) as? [String] {
+        // Don't access PhotoKit on first launch - it triggers permission prompt
+        let hasSeenOnboarding = UserDefaults.standard.bool(forKey: "hasSeenOnboarding")
+        guard hasSeenOnboarding else { return }
+        
+        if let ids = UserDefaults.standard.array(forKey: trashKey) as? [String], !ids.isEmpty {
             let fetchOptions = PHFetchOptions()
             let assets = PHAsset.fetchAssets(withLocalIdentifiers: ids, options: fetchOptions)
             var loadedAssets: [PHAsset] = []

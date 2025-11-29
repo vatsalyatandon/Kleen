@@ -1,11 +1,3 @@
-//
-//  OnboardingView.swift
-//  Kleen
-//
-//  Created by Vatsalya Tandon on 29/11/25.
-//
-
-
 import SwiftUI
 
 struct OnboardingView: View {
@@ -60,14 +52,6 @@ struct OnboardingView: View {
                         .cornerRadius(15)
                 }
                 .padding(.horizontal, 40)
-                
-                if currentPage > 0 {
-                    Button("Skip") {
-                        showOnboarding = false
-                        UserDefaults.standard.set(true, forKey: "hasSeenOnboarding")
-                    }
-                    .foregroundColor(.gray)
-                }
                 
                 Spacer()
             }
