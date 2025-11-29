@@ -2,10 +2,24 @@ import SwiftUI
 
 struct ContentView: View {
     @StateObject var photoManager = PhotoManager()
+    @State private var showOnboarding = !UserDefaults.standard.bool(forKey: "hasSeenOnboarding")
+    @State private var showTrashView = false
     
     var body: some View {
         ZStack {
-            Color.black.edgesIgnoringSafeArea(.all) // Dark mode background
+            Color.black.edgesIgnoringSafeArea(.all)
+            
+            if showOnboarding {
+                OnboardingView(showOnboarding: $showOnboarding)
+            } else {
+                mainContent
+            }
+        }
+    }
+    
+    var mainContent: some View {
+        ZStack {
+            Color.black.edgesIgnoringSafeArea(.all)
             
             if !photoManager.permissionGranted {
                 VStack {
@@ -56,49 +70,80 @@ struct ContentView: View {
                 }
             } else {
                 // Feed state
-                VStack {
-                    HStack {
-                        if photoManager.isLimited {
-                            Button(action: {
-                                photoManager.presentLimitedLibraryPicker()
-                            }) {
-                                Image(systemName: "plus.circle.fill")
-                                    .foregroundColor(.white)
-                                    .padding()
+                ZStack {
+                    VStack {
+                        HStack {
+                            if photoManager.isLimited {
+                                Button(action: {
+                                    photoManager.presentLimitedLibraryPicker()
+                                }) {
+                                    Image(systemName: "plus.circle.fill")
+                                        .foregroundColor(.white)
+                                        .padding()
+                                }
                             }
-                        }
-                        
-                        Spacer()
-                        
-                        Button(action: {
-                            // Undo or show list? For now just a placeholder or count
-                            print("Trash count: \(photoManager.photosToDelete.count)")
-                        }) {
-                            Text("Trash: \(photoManager.photosToDelete.count)")
-                                .foregroundColor(.white)
-                                .padding()
-                        }
-                    }
-                    
-                    ZStack {
-                        ForEach(Array(photoManager.photos.prefix(3).reversed()), id: \.localIdentifier) { asset in
-                            CardView(asset: asset) { kept in
-                                if !kept {
-                                    photoManager.deletePhoto(asset: asset)
-                                } else {
-                                    if let index = photoManager.photos.firstIndex(of: asset) {
-                                        photoManager.photos.remove(at: index)
-                                    }
+                            
+                            Spacer()
+                            
+                            HStack {
+                                Image(systemName: "trash.fill")
+                                Text("\(photoManager.photosToDelete.count)")
+                            }
+                            .foregroundColor(.white)
+                            .padding(.horizontal, 16)
+                            .padding(.vertical, 8)
+                            .background(photoManager.photosToDelete.count > 0 ? Color.red : Color.gray)
+                            .cornerRadius(20)
+                            .onTapGesture {
+                                withAnimation {
+                                    showTrashView = true
                                 }
                             }
                             .padding()
-                            .transition(.scale)
                         }
+                        .zIndex(10) // Ensure HStack is above cards
+                        
+                        ZStack {
+                            ForEach(Array(photoManager.photos.prefix(3).reversed()), id: \.localIdentifier) { asset in
+                                CardView(asset: asset) { kept in
+                                    if !kept {
+                                        photoManager.deletePhoto(asset: asset)
+                                    } else {
+                                        if let index = photoManager.photos.firstIndex(of: asset) {
+                                            photoManager.photos.remove(at: index)
+                                        }
+                                    }
+                                }
+                                .padding()
+                                .transition(.scale)
+                            }
+                        }
+                        .animation(.spring(), value: photoManager.photos)
+                        
+                        Spacer()
                     }
-                    .animation(.spring(), value: photoManager.photos)
                     
-                    Spacer()
+                    // Trash view overlay
+                    if showTrashView {
+                        TrashView(
+                            photosToDelete: photoManager.photosToDelete,
+                            onDismiss: {
+                                withAnimation {
+                                    showTrashView = false
+                                }
+                            },
+                            onCommit: {
+                                photoManager.commitDeletion()
+                                withAnimation {
+                                    showTrashView = false
+                                }
+                            }
+                        )
+                        .zIndex(1)
+                        .transition(.move(edge: .trailing))
+                    }
                 }
+                .animation(.easeInOut, value: showTrashView)
             }
         }
     }

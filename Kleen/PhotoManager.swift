@@ -18,9 +18,21 @@ class PhotoManager: NSObject, ObservableObject, PHPhotoLibraryChangeObserver {
     
     override init() {
         super.init()
+        
+        // Check current status synchronously to avoid UI flash
+        let currentStatus = PHPhotoLibrary.authorizationStatus()
+        self.permissionGranted = (currentStatus == .authorized || currentStatus == .limited)
+        self.isLimited = (currentStatus == .limited)
+        
         PHPhotoLibrary.shared().register(self)
         loadTrash()
-        requestPermission()
+        
+        // Only request if not already authorized
+        if !permissionGranted {
+            requestPermission()
+        } else {
+            fetchPhotos()
+        }
     }
     
     deinit {
@@ -56,7 +68,9 @@ class PhotoManager: NSObject, ObservableObject, PHPhotoLibraryChangeObserver {
     }
     
     func fetchPhotos() {
-        isLoading = true
+        DispatchQueue.main.async {
+            self.isLoading = true
+        }
         errorMessage = nil
         lastLoadedIndex = 0
         photos.removeAll()
