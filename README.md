@@ -140,10 +140,12 @@ Kleen/
 ├── ContentView.swift        # Main view coordinator
 ├── PhotoManager.swift       # Core business logic (PhotoKit)
 ├── CardView.swift          # Swipeable photo card
-├── LoadingView.swift       # Animated loading screen
+├── LoadingView.swift       # Splash screen
 ├── FinishedView.swift      # Completion/success screen
 ├── OnboardingView.swift    # First-time tutorial
 ├── TrashView.swift         # Trash management UI
+├── PhotoDetailView.swift   # Photo metadata details
+├── ProgressBar.swift       # Progress tracking UI
 └── Info.plist              # App configuration & permissions
 ```
 
@@ -161,18 +163,22 @@ Kleen/
 - Manages photo library permissions and access
 - Implements `PHPhotoLibraryChangeObserver` for external sync
 - Handles batch deletion and persistence
-- Pagination for performance
+- Pagination for performance with infinite scroll
+- Tracks progress (total photos, reviewed count)
+- Persists both trash queue and kept photos to prevent re-showing
 
 #### State Management
 - `@StateObject` for PhotoManager lifecycle
 - `@Published` properties for reactive UI updates
-- `@State` for local view state (onboarding, trash view)
+- `@State` for local view state (onboarding, trash view, splash screen)
 
 ### Performance Optimizations
 1. **Lazy Loading**: Photos loaded in batches of 50
-2. **Thumbnail Caching**: Uses `PHImageManager` with appropriate sizes
-3. **Burst Filtering**: `includeAllBurstAssets = false`
-4. **Main Thread Dispatch**: All UI updates on main queue
+2. **Infinite Scroll**: Automatically loads next batch when < 5 photos remain
+3. **Thumbnail Caching**: Uses `PHImageManager` with appropriate sizes
+4. **Burst Filtering**: `includeAllBurstAssets = false`
+5. **Main Thread Dispatch**: All UI updates on main queue
+6. **Index-based Enumeration**: Efficient pagination using `IndexSet`
 
 ## 🐛 Troubleshooting
 
