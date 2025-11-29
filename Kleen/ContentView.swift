@@ -58,7 +58,18 @@ struct ContentView: View {
                 // Feed state
                 VStack {
                     HStack {
+                        if photoManager.isLimited {
+                            Button(action: {
+                                photoManager.presentLimitedLibraryPicker()
+                            }) {
+                                Image(systemName: "plus.circle.fill")
+                                    .foregroundColor(.white)
+                                    .padding()
+                            }
+                        }
+                        
                         Spacer()
+                        
                         Button(action: {
                             // Undo or show list? For now just a placeholder or count
                             print("Trash count: \(photoManager.photosToDelete.count)")
