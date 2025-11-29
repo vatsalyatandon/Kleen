@@ -9,10 +9,12 @@ class PhotoManager: NSObject, ObservableObject, PHPhotoLibraryChangeObserver {
     @Published var permissionGranted: Bool = false
     @Published var isLimited: Bool = false
     @Published var isLoading: Bool = false
-    @Published var errorMessage: String? = nil
+    @Published var errorMessage: String?
+    @Published var totalCount: Int = 0
+    @Published var reviewedCount: Int = 0
     
     private var allAssets: PHFetchResult<PHAsset>?
-    private let trashKey = "gallery_cleaner_trash_ids"
+    private let trashKey = "photosToDelete"
     private let keptKey = "photosKept"
     
     override init() {
@@ -127,11 +129,15 @@ class PhotoManager: NSObject, ObservableObject, PHPhotoLibraryChangeObserver {
         DispatchQueue.main.async {
             self.photos = newPhotos
             self.isLoading = false
+            self.updateCounts()
         }
     }
     
     func loadMorePhotos() {
         guard let lastPhoto = photos.last, let allAssets = allAssets else { return }
+        
+        let lastIndex = allAssets.index(of: lastPhoto)
+        guard lastIndex != NSNotFound, lastIndex + 1 < allAssets.count else { return }
         
         let keptIds = Set(UserDefaults.standard.stringArray(forKey: keptKey) ?? [])
         let trashIds = Set(photosToDelete.map { $0.localIdentifier })
@@ -139,24 +145,20 @@ class PhotoManager: NSObject, ObservableObject, PHPhotoLibraryChangeObserver {
         var newPhotos: [PHAsset] = []
         var count = 0
         let batchSize = 50
-        var shouldStartAdding = false
         
-        allAssets.enumerateObjects { asset, index, stop in
-            if asset.localIdentifier == lastPhoto.localIdentifier {
-                shouldStartAdding = true
-                return // Continue to next iteration
+        // Start from the next photo
+        let startIndex = lastIndex + 1
+        let indexSet = IndexSet(integersIn: startIndex..<allAssets.count)
+        
+        allAssets.enumerateObjects(at: indexSet, options: []) { asset, index, stop in
+            // Filter out kept/trash
+            if !keptIds.contains(asset.localIdentifier) && !trashIds.contains(asset.localIdentifier) {
+                newPhotos.append(asset)
+                count += 1
             }
             
-            if shouldStartAdding {
-                // Filter out kept/trash
-                if !keptIds.contains(asset.localIdentifier) && !trashIds.contains(asset.localIdentifier) {
-                    newPhotos.append(asset)
-                    count += 1
-                }
-                
-                if count >= batchSize {
-                    stop.pointee = true
-                }
+            if count >= batchSize {
+                stop.pointee = true
             }
         }
         
@@ -165,11 +167,24 @@ class PhotoManager: NSObject, ObservableObject, PHPhotoLibraryChangeObserver {
         }
     }
     
+    private func updateCounts() {
+        guard let allAssets = allAssets else { return }
+        
+        let keptCount = UserDefaults.standard.stringArray(forKey: keptKey)?.count ?? 0
+        let trashCount = photosToDelete.count
+        
+        DispatchQueue.main.async {
+            self.totalCount = allAssets.count
+            self.reviewedCount = keptCount + trashCount
+        }
+    }
+    
     func keepPhoto(asset: PHAsset) {
         // Add to kept list and persist
         var keptIds = UserDefaults.standard.stringArray(forKey: keptKey) ?? []
         keptIds.append(asset.localIdentifier)
         UserDefaults.standard.set(keptIds, forKey: keptKey)
+        updateCounts()
     }
     
     func restorePhoto(asset: PHAsset) {
@@ -185,6 +200,7 @@ class PhotoManager: NSObject, ObservableObject, PHPhotoLibraryChangeObserver {
                 // Inserting at 0 makes it the "next" card, which is a good "Undo" behavior.
                 photos.insert(asset, at: 0)
             }
+            updateCounts()
         }
     }
     
@@ -192,9 +208,11 @@ class PhotoManager: NSObject, ObservableObject, PHPhotoLibraryChangeObserver {
     
     func deletePhoto(asset: PHAsset) {
         DispatchQueue.main.async {
-            if !self.photosToDelete.contains(asset) {
+            // Check if already in trash to avoid duplicates
+            if !self.photosToDelete.contains(where: { $0.localIdentifier == asset.localIdentifier }) {
                 self.photosToDelete.append(asset)
                 self.saveTrash()
+                self.updateCounts()
             }
             if let index = self.photos.firstIndex(of: asset) {
                 self.photos.remove(at: index)
@@ -273,6 +291,7 @@ class PhotoManager: NSObject, ObservableObject, PHPhotoLibraryChangeObserver {
             // 1. Check if photos in our deck were deleted externally
             if let allAssets = self.allAssets, let changes = changeInstance.changeDetails(for: allAssets) {
                 self.allAssets = changes.fetchResultAfterChanges
+                self.updateCounts()
                 // If objects were removed, we might need to remove them from our 'photos' array
                 if changes.hasIncrementalChanges {
                     let removed = changes.removedObjects

@@ -4,12 +4,25 @@ struct ContentView: View {
     @StateObject var photoManager = PhotoManager()
     @State private var showOnboarding = !UserDefaults.standard.bool(forKey: "hasSeenOnboarding")
     @State private var showTrashView = false
+    @State private var showSplash = true // Start with splash screen
     
     var body: some View {
         ZStack {
             Color.black.edgesIgnoringSafeArea(.all)
             
-            if showOnboarding {
+            if showSplash {
+                LoadingView()
+                    .transition(.opacity)
+                    .zIndex(100)
+                    .onAppear {
+                        // Force splash for 2 seconds
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
+                            withAnimation {
+                                showSplash = false
+                            }
+                        }
+                    }
+            } else if showOnboarding {
                 OnboardingView(showOnboarding: $showOnboarding)
             } else {
                 mainContent
@@ -98,35 +111,53 @@ struct ContentView: View {
                 // Feed state
                 ZStack {
                     VStack {
-                        HStack {
-                            if photoManager.isLimited {
-                                Button(action: {
-                                    photoManager.presentLimitedLibraryPicker()
-                                }) {
-                                    Image(systemName: "plus.circle.fill")
-                                        .foregroundColor(.white)
-                                        .padding()
-                                }
-                            }
+                        // Top Bar
+                        HStack(alignment: .center) {
+                            // Left: Kleen Title
+                            Text("Kleen")
+                                .font(.system(size: 34, weight: .bold, design: .default)) // Cleaner, standard font
+                                .foregroundColor(.white)
+                                .tracking(0.5)
                             
                             Spacer()
                             
-                            HStack {
-                                Image(systemName: "trash.fill")
-                                Text("\(photoManager.photosToDelete.count)")
-                            }
-                            .foregroundColor(.white)
-                            .padding(.horizontal, 16)
-                            .padding(.vertical, 8)
-                            .background(photoManager.photosToDelete.count > 0 ? Color.red : Color.gray)
-                            .cornerRadius(20)
-                            .onTapGesture {
-                                withAnimation {
-                                    showTrashView = true
+                            // Right: Actions
+                            HStack(spacing: 16) {
+                                // Manage Photos Button (if limited)
+                                if photoManager.isLimited {
+                                    Button(action: {
+                                        photoManager.presentLimitedLibraryPicker()
+                                    }) {
+                                        Image(systemName: "plus.circle.fill")
+                                            .font(.system(size: 24))
+                                            .foregroundColor(.white)
+                                    }
+                                }
+                                
+                                // Trash Button
+                                HStack(spacing: 6) {
+                                    Image(systemName: "trash.fill")
+                                        .font(.system(size: 14, weight: .bold))
+                                    Text("\(photoManager.photosToDelete.count)")
+                                        .font(.system(size: 14, weight: .bold))
+                                }
+                                .foregroundColor(.white)
+                                .padding(.horizontal, 12)
+                                .padding(.vertical, 8)
+                                .background(
+                                    Capsule()
+                                        .fill(photoManager.photosToDelete.count > 0 ? Color.red : Color.gray.opacity(0.5))
+                                )
+                                .onTapGesture {
+                                    withAnimation {
+                                        showTrashView = true
+                                    }
                                 }
                             }
-                            .padding()
                         }
+                        .padding(.horizontal, 20)
+                        .padding(.top, 10)
+                        .padding(.bottom, 5)
                         .zIndex(10) // Ensure HStack is above cards
                         
                         ZStack {
@@ -145,6 +176,11 @@ struct ContentView: View {
                                         // Mark as kept
                                         photoManager.keepPhoto(asset: asset)
                                     }
+                                    
+                                    // Load more photos if running low
+                                    if photoManager.photos.count < 5 {
+                                        photoManager.loadMorePhotos()
+                                    }
                                 }
                                 // Stack Effect Logic
                                 .zIndex(Double(topPhotos.count - index)) // Ensure correct layering
@@ -159,6 +195,15 @@ struct ContentView: View {
                         .animation(.spring(), value: photoManager.photos)
                         
                         Spacer()
+                        
+                        // Progress Bar at bottom
+                        if photoManager.totalCount > 0 {
+                            ProgressBar(
+                                totalCount: photoManager.totalCount,
+                                reviewedCount: photoManager.reviewedCount
+                            )
+                            .transition(.move(edge: .bottom))
+                        }
                     }
                     
                     // Trash view overlay
@@ -189,4 +234,3 @@ struct ContentView: View {
         }
     }
 }
-    

@@ -101,10 +101,14 @@ struct CardView: View {
             }
             .background(Color.black)
             .cornerRadius(20)
-            .shadow(color: .black.opacity(0.2), radius: 10, x: 0, y: 5)
+            .overlay(
+                RoundedRectangle(cornerRadius: 20)
+                    .stroke(Color.white.opacity(0.1), lineWidth: 1)
+            )
+            .shadow(color: .black.opacity(0.4), radius: 15, x: 0, y: 10)
             .offset(x: translation.width, y: translation.height)
             .rotationEffect(.degrees(Double(translation.width / 20)))
-            .scaleEffect(translation.width != 0 ? 1.05 : 1.0) // Subtle pop on drag
+            .scaleEffect(translation.width != 0 ? 1.02 : 1.0) // Subtle pop on drag
             .gesture(
                 DragGesture()
                     .onChanged { value in
@@ -116,7 +120,7 @@ struct CardView: View {
                         } else if value.translation.width < -100 {
                             onRemove(false)
                         } else {
-                            withAnimation(.spring()) {
+                            withAnimation(.spring(response: 0.5, dampingFraction: 0.6, blendDuration: 0)) {
                                 translation = .zero
                             }
                         }
@@ -126,6 +130,7 @@ struct CardView: View {
                 PhotoDetailView(asset: asset)
             }
         }
+        .padding(10) // Add some padding so card doesn't touch screen edges
         .onAppear {
             loadImage()
         }
