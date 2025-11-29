@@ -49,12 +49,12 @@ Kleen is a fast, intuitive iOS app that helps you clean up your photo gallery us
 
 1. **Clone or Download the Project**
    ```bash
-   cd /path/to/GalleryCleaner
+   cd /path/to/Kleen
    ```
 
 2. **Open in Xcode**
    - Open `Kleen.xcodeproj` in Xcode
-   - Or drag the entire `GalleryCleaner` folder into Xcode to create a new project
+   - Or drag the entire `Kleen` folder into Xcode to create a new project
 
 3. **Configure Project Settings**
    - Select your Development Team in Signing & Capabilities
@@ -110,7 +110,7 @@ Kleen is a fast, intuitive iOS app that helps you clean up your photo gallery us
 ## 🏗️ Project Structure
 
 ```
-GalleryCleaner/
+Kleen/
 ├── KleenApp.swift           # App entry point (@main)
 ├── ContentView.swift        # Main view coordinator
 ├── PhotoManager.swift       # Core business logic (PhotoKit)
